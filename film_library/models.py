@@ -30,8 +30,6 @@ class Users(db.Model):
     surname = db.Column(db.String(50), nullable=False)
     age = db.Column(db.Integer)
 
-    #films = db.relationship('films', backref='users', lazy=True)
-
     def __repr__(self):
         return f"User's id: {self.user_id}"
 
