@@ -1,4 +1,5 @@
-""" Database
+""" Database model.
+Create tables
  """
 from sqlalchemy.dialects.postgresql import UUID
 

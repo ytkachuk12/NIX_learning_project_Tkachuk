@@ -25,7 +25,7 @@ migrate = Migrate(app, db)
 
 # import models
 from film_library import models
-db.create_all()
+
 
 if __name__ == "__main__":
     # launch app
