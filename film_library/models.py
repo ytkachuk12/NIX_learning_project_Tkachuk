@@ -42,6 +42,7 @@ class Films(db.Model):
     film_name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String)
     rating = db.Column(db.Float, default=0)
+    number_of_rated_users = db.Column(db.Integer, default=0)
     release_date = db.Column(db.Date)
     poster_link = db.Column(db.String, unique=True)
 
