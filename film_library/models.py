@@ -24,10 +24,10 @@ class Users(db.Model):
     __tablename__ = 'users'
     user_id = db.Column(db.Integer, primary_key=True, nullable=False)
     nickname = db.Column(db.String(50), unique=True, nullable=False)
-    hash_pass = db.Column(db.String(128), nullable=False)
+    hash_and_salt = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(50), unique=True, nullable=False)
-    first_name = db.Column(db.String(50), nullable=False)
-    surname = db.Column(db.String(50), nullable=False)
+    first_name = db.Column(db.String(50))
+    surname = db.Column(db.String(50))
     age = db.Column(db.Integer)
 
     def __repr__(self):

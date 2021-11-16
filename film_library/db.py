@@ -5,7 +5,7 @@ from typing import Optional, List
 
 import bcrypt
 
-from .models import *
+from film_library.models import *
 
 
 def hashing_pass(password: str):
