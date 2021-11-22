@@ -7,13 +7,15 @@ from werkzeug.exceptions import abort, HTTPException, InternalServerError, BadRe
 
 from film_library import app, api
 from film_library.models import Users
-from film_library.db import (
-    register_user, checking_pass, insert_film, delete_film, edit_film,
+from film_library.db_user import register_user, checking_pass
+from film_library.db_film import (
+    insert_film, delete_film, edit_film,
     get_user_creator, rate_film, search_films
 )
 from film_library.api_models import (
     user_register_resource, user_login_resource, user_model,
-    film_search_resource, film_insert_resource, film_change_resource, film_delete_resource, film_model
+    film_search_resource, film_insert_resource, film_change_resource, film_delete_resource,
+    film_rate_resource, film_model
 )
 
 login_manager = LoginManager(app)
@@ -196,6 +198,7 @@ class FilmsInteraction(Resource):
 class FilmsRate(Resource):
 
     @api.marshal_with(film_model, code=200, envelope="films")
+    @api.doc(body=film_rate_resource)
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('film_id', type=int, required=True)

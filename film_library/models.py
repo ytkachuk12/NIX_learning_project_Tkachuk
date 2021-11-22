@@ -9,17 +9,21 @@ from film_library import db
 # Association table for table films and directors (many to many relationship)
 film_director = db.Table('film_director',
                          db.Column('films_film_id',
-                                   db.ForeignKey('films.film_id', ondelete='CASCADE'), primary_key=True),
+                                   db.ForeignKey('films.film_id', ondelete='CASCADE'),
+                                   primary_key=True),
                          db.Column('directors_director_id',
-                                   db.ForeignKey('directors.director_id', ondelete='CASCADE'), primary_key=True)
+                                   db.ForeignKey('directors.director_id', ondelete='CASCADE'),
+                                   primary_key=True)
                          )
 
 # Association table for table films and genres (many to many relationship)
 film_genre = db.Table('film_genre',
                       db.Column('films_film_id',
-                                db.ForeignKey('films.film_id', ondelete='CASCADE'), primary_key=True),
+                                db.ForeignKey('films.film_id', ondelete='CASCADE'),
+                                primary_key=True),
                       db.Column('genres_genre_id',
-                                db.ForeignKey('genres.genre_id', ondelete='CASCADE'), primary_key=True)
+                                db.ForeignKey('genres.genre_id', ondelete='CASCADE'),
+                                primary_key=True)
                       )
 
 
@@ -51,13 +55,13 @@ class Films(db.Model):
     release_date = db.Column(db.Date)
     poster_link = db.Column(db.String, unique=True)
 
-    # relation_film_derector = db.relationship('Directors', secondary=film_director, lazy='subquery',
-    #                                             backref=db.backref('relation_film_director', lazy=True,
-    #                                                                passive_deletes=True))
-
-    # relation_film_genre = db.relationship('Genres', secondary=film_genre, lazy='subquery',
-    #                                       backref=db.backref('relation_film_genre', lazy=True,
-    #                                                         passive_deletes=True))
+    # relation_film_derector = db.relationship(
+    #     'Directors', secondary=film_director, lazy='subquery',
+    #     backref=db.backref('relation_film_director', lazy=True, passive_deletes=True))
+    #
+    # relation_film_genre = db.relationship(
+    #     'Genres', secondary=film_genre, lazy='subquery',
+    #     backref=db.backref('relation_film_genre', lazy=True, passive_deletes=True))
 
     def __repr__(self):
         return f"Film's id: {self.film_id}"
@@ -69,8 +73,10 @@ class Directors(db.Model):
     director_id = db.Column(db.Integer, primary_key=True, nullable=False)
     director_name = db.Column(db.String(100), nullable=False)
 
-    add_film_director = db.relationship('Films', secondary=film_director, lazy='subquery',
-                                        backref=db.backref('add_film_director', lazy=True, passive_deletes=True))
+    add_film_director = db.relationship(
+        'Films', secondary=film_director, lazy='subquery',
+        backref=db.backref('add_film_director', lazy=True, passive_deletes=True)
+        )
 
     def __repr__(self):
         return f"Director's id: {self.director_id}"
@@ -82,8 +88,10 @@ class Genres(db.Model):
     genre_id = db.Column(db.Integer, primary_key=True, nullable=False)
     genre_name = db.Column(db.String(100), nullable=False)
 
-    add_film_genre = db.relationship('Films', secondary=film_genre, lazy='subquery',
-                                     backref=db.backref('add_film_genre', lazy=True, passive_deletes=True))
+    add_film_genre = db.relationship(
+        'Films', secondary=film_genre, lazy='subquery',
+        backref=db.backref('add_film_genre', lazy=True, passive_deletes=True)
+        )
 
     def __repr__(self):
         return f"Genre's id: {self.genre_id}"
