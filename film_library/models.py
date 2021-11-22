@@ -7,24 +7,22 @@ from flask_login import UserMixin
 from film_library import db
 
 # Association table for table films and directors (many to many relationship)
-film_director = db.Table('film_director',
-                         db.Column('films_film_id',
-                                   db.ForeignKey('films.film_id', ondelete='CASCADE'),
-                                   primary_key=True),
-                         db.Column('directors_director_id',
-                                   db.ForeignKey('directors.director_id', ondelete='CASCADE'),
-                                   primary_key=True)
-                         )
+film_director = db.Table(
+    'film_director',
+    db.Column('films_film_id', db.ForeignKey('films.film_id', ondelete='CASCADE'),
+              primary_key=True),
+    db.Column('directors_director_id', db.ForeignKey('directors.director_id', ondelete='CASCADE'),
+              primary_key=True)
+)
 
 # Association table for table films and genres (many to many relationship)
-film_genre = db.Table('film_genre',
-                      db.Column('films_film_id',
-                                db.ForeignKey('films.film_id', ondelete='CASCADE'),
-                                primary_key=True),
-                      db.Column('genres_genre_id',
-                                db.ForeignKey('genres.genre_id', ondelete='CASCADE'),
-                                primary_key=True)
-                      )
+film_genre = db.Table(
+    'film_genre',
+    db.Column('films_film_id', db.ForeignKey('films.film_id', ondelete='CASCADE'),
+              primary_key=True),
+    db.Column('genres_genre_id', db.ForeignKey('genres.genre_id', ondelete='CASCADE'),
+              primary_key=True)
+)
 
 
 class Users(UserMixin, db.Model):
@@ -32,7 +30,7 @@ class Users(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     nickname = db.Column(db.String(50), unique=True, nullable=False)
-    hash_and_salt = db.Column(db.String(128), nullable=False)
+    hash_and_salt = db.Column(db.LargeBinary, nullable=False)
     email = db.Column(db.String(50), unique=True, nullable=False)
     first_name = db.Column(db.String(50))
     surname = db.Column(db.String(50))
@@ -73,10 +71,10 @@ class Directors(db.Model):
     director_id = db.Column(db.Integer, primary_key=True, nullable=False)
     director_name = db.Column(db.String(100), nullable=False)
 
-    add_film_director = db.relationship(
-        'Films', secondary=film_director, lazy='subquery',
-        backref=db.backref('add_film_director', lazy=True, passive_deletes=True)
-        )
+    relation_film_director = db.relationship(
+        'Films', secondary=film_director,
+        backref=db.backref('relation_film_director', lazy='joined'),
+        passive_deletes=True, cascade='all, delete')
 
     def __repr__(self):
         return f"Director's id: {self.director_id}"
@@ -88,10 +86,11 @@ class Genres(db.Model):
     genre_id = db.Column(db.Integer, primary_key=True, nullable=False)
     genre_name = db.Column(db.String(100), nullable=False)
 
-    add_film_genre = db.relationship(
-        'Films', secondary=film_genre, lazy='subquery',
-        backref=db.backref('add_film_genre', lazy=True, passive_deletes=True)
-        )
+    relation_film_genre = db.relationship(
+        'Films', secondary=film_genre,
+        backref=db.backref('relation_film_genre', lazy='joined'),
+        passive_deletes=True, cascade='all, delete')
+
 
     def __repr__(self):
         return f"Genre's id: {self.genre_id}"

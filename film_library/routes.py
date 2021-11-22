@@ -1,25 +1,33 @@
-from datetime import datetime
+import logging
 
-from flask import jsonify, request, g, redirect
-from flask_login import login_user, login_required, logout_user, login_manager, LoginManager, current_user
-from flask_restx import Api, Resource, reqparse, fields
-from werkzeug.exceptions import abort, HTTPException, InternalServerError, BadRequest
+from flask_login import login_user, login_required, logout_user, LoginManager, current_user
+from flask_restx import Resource, reqparse
+from werkzeug.exceptions import abort
 
 from film_library import app, api
 from film_library.models import Users
 from film_library.db_user import register_user, checking_pass
 from film_library.db_film import (
     insert_film, delete_film, edit_film,
-    get_user_creator, rate_film, search_films
+    get_user_creator, rate_film, search_films, delete_director
 )
 from film_library.api_models import (
     user_register_resource, user_login_resource, user_model,
     film_search_resource, film_insert_resource, film_change_resource, film_delete_resource,
-    film_rate_resource, film_model
+    film_rate_resource, film_model, director_delete_resource, delete_model
 )
 
 login_manager = LoginManager(app)
 login_manager.init_app(app)
+
+# add logger. check log info in record.log file in root app folder
+logging.basicConfig(filename='record.log', level=logging.DEBUG)
+
+
+@app.teardown_request
+def teardown_request(exception=None):
+    """Launch after any request"""
+    app.logger.info("After request")
 
 
 @login_manager.user_loader
@@ -28,13 +36,14 @@ def load_user(id):
     return Users.query.get(int(id))
 
 
-@api.route('/hello')
+@api.route('/')
 class HelloWorld(Resource):
     def get(self):
         return {'hello': 'hello world'}
 
 
 @api.route('/login')
+# @my_logger('/login')
 class LoginUser(Resource):
 
     @api.doc(body=user_login_resource)
@@ -76,6 +85,7 @@ class RegisterUser(Resource):
         parser.add_argument('first_name', type=str)
         parser.add_argument('surname', type=str)
         parser.add_argument('age', type=int)
+        parser.add_argument('admin', type=bool, default=False)
 
         args = parser.parse_args()
 
@@ -85,7 +95,7 @@ class RegisterUser(Resource):
             return abort(400, f"User {args['nickname']} is too small.")
 
         user_id = register_user(args['nickname'], args['password'], args['email'],
-                                args['first_name'], args['surname'], args['age'])
+                                args['first_name'], args['surname'], args['age'], args['admin'])
 
         return {"id": user_id, "message": "Successfully register"}
 
@@ -134,14 +144,7 @@ class FilmsInteraction(Resource):
         # take user id from flask_login
         user_id = current_user.id
 
-        # convert date
-        try:
-            d = args['release_date']
-            release_date = datetime.strptime(d, '%Y-%m-%d').date()
-        except ValueError:
-            return abort(400, "Wrong date format")
-
-        film = insert_film(user_id, args["film_name"], args["description"], release_date,
+        film = insert_film(user_id, args["film_name"], args["description"], args["release_date"],
                            args["poster_link"], args["genre_names"], args["director_names"])
 
         return film
@@ -176,6 +179,7 @@ class FilmsInteraction(Resource):
 
     @login_required
     @api.doc(body=film_delete_resource)
+    @api.marshal_with(delete_model, code=200, envelope="deletes")
     def delete(self):
         parser = reqparse.RequestParser()
         parser.add_argument('id', type=int, required=True)
@@ -184,14 +188,31 @@ class FilmsInteraction(Resource):
 
         # take user id from flask_login
         user = current_user
-        print(user.id)
-        print(args['id'])
-        print(get_user_creator(args['id']))
+
         # check if this user did not creat this film or user is not admin
         if user.id != get_user_creator(args['id']) and not current_user.admin:
             abort(400, f"You can modify the films created by you Only, id: {user.id}")
 
         return delete_film(args['id'])
+
+
+@api.route("/directors")
+class DelDirector(Resource):
+
+    @login_required
+    @api.marshal_with(delete_model, code=200, envelope="deletes")
+    @api.doc(body=director_delete_resource)
+    def delete(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('director_name', type=str, required=True)
+
+        args = parser.parse_args()
+
+        # check if this user is not admin
+        if not current_user.admin:
+            abort(400, f"You can't modify directors")
+
+        return delete_director(args['director_name'])
 
 
 @api.route('/film/rate')

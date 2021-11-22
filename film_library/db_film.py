@@ -99,7 +99,7 @@ def insert_film_genres(new_film: Films, genre_names: list[str]) -> None:
             insert_into_db(genre)
         new_genre = Genres.query.filter_by(genre_name=genre_name).first()
         # add genre_id and film_id into associated table
-        new_film.add_film_genre.append(new_genre)
+        new_film.relation_film_genre.append(new_genre)
 
     db.session.commit()
 
@@ -116,7 +116,7 @@ def insert_film_directors(new_film: Films, director_names: list[str]) -> None:
             insert_into_db(director)
         new_director = Directors.query.filter_by(director_name=director_name).first()
         # add director_id and film_id into associated table
-        new_film.add_film_director.append(new_director)
+        new_film.relation_film_director.append(new_director)
 
     db.session.commit()
 
@@ -233,12 +233,15 @@ def search_films(film_mask: str, release_range: Optional[List[str]],
     return list_of_films
 
 
-def insert_film(user_id, film_name: str, description: Optional[str], release_date: date,
+def insert_film(user_id, film_name: str, description: Optional[str], release_date: str,
                 poster_link: Optional[str], genre_names: Optional[list[str]],
                 director_names: Optional[List[str]]) -> dict:
     """Insert film data in DB
         :returns dict containing all find films parameters
         :raise flask abort if film with same name and release is already in DB, code 404"""
+    # convert type str to type Date
+    release_date = convert_str_to_date(release_date)
+
     # check if film already in the DB
     if Films.query.filter_by(film_name=film_name, release_date=release_date).first():
         return abort(404, f'Film with {film_name} name and same release year already exist')
@@ -296,18 +299,30 @@ def edit_film(film_id: int, film_name: Optional[str], description: Optional[str]
 
 def delete_film(film_id: int):
     """Delete the film
-    need add delete from film-director"""
-    if Films.query.filter_by(film_id=film_id).first():
-        try:
-            Films.query.filter_by(film_id=film_id).delete()
-        except Exception as e:
-            db.session.rollback()
-            print(e)
-            return abort(500)
-        else:
-            db.session.commit()
-        return film_id
-    return abort(400, f'No film with id {film_id}')
+    and data from film-director"""
+    film = Films.query.filter_by(
+        film_id=film_id).first_or_404(description=f"No film with this id {film_id}")
+    try:
+        db.session.delete(film)
+    except Exception as e:
+        db.session.rollback()
+        return abort(500, e)
+    db.session.commit()
+    return {"message": "Successfully deleted"}
+
+
+def delete_director(director_name: str):
+    """Delete the director
+        """
+    director = Directors.query.filter_by(
+        director_name=director_name).first_or_404(description="No director with this name")
+    try:
+        db.session.delete(director)
+    except Exception as e:
+        db.session.rollback()
+        return abort(500, e)
+    db.session.commit()
+    return {"message": "Successfully deleted"}
 
 
 def convert_to_dict(film: Films, directors: Directors, genres: Genres) -> dict:
@@ -323,8 +338,12 @@ def convert_to_dict(film: Films, directors: Directors, genres: Genres) -> dict:
     if directors:
         for i in directors:
             film["director_names"].append(i.director_name)
+    else:
+        film["director_names"].append("unknown")
     if genres:
         for i in genres:
             film["genre_names"].append(i.genre_name)
+    else:
+        film["genre_names"].append("unknown")
 
     return film

@@ -13,14 +13,14 @@ def hashing_pass(password: str) -> str:
     """Hash password with bcrypt module
     :return hash"""
     # password = user input, and generate salt
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    return bcrypt.hashpw(password.encode('utf8'), bcrypt.gensalt())
 
 
 def checking_pass(nickname: str, password: str) -> Optional[int]:
     """Check the DB contains nickname and password hash
     :returns user: Users object if nickname and password correct or None"""
     check_user = Users.query.filter_by(nickname=nickname).first()
-    if bcrypt.checkpw(password.encode(), check_user.hash_and_salt):
+    if bcrypt.checkpw(password.encode('utf8'), check_user.hash_and_salt):
         return check_user
     return None
 
@@ -42,7 +42,7 @@ def checking_email(email: str) -> bool:
 
 
 def register_user(nickname: str, password: str, email: str, first_name: Optional[str] = None,
-                  surname: Optional[str] = None, age: Optional[int] = None) -> int:
+                  surname: Optional[str] = None, age: Optional[int] = None, admin: bool = False) -> int:
     """Insert new user in db
     :return user id
     :raise flask abort if nickname is already in db, code 404
@@ -57,7 +57,7 @@ def register_user(nickname: str, password: str, email: str, first_name: Optional
     hash_and_salt = hashing_pass(password)
     # create object of Users table and insert it in db
     user = Users(nickname=nickname, hash_and_salt=hash_and_salt, email=email,
-                 first_name=first_name, surname=surname, age=age)
+                 first_name=first_name, surname=surname, age=age, admin=admin)
     try:
         db.session.add(user)
     except Exception as e:
