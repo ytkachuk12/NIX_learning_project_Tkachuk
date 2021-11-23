@@ -1,4 +1,4 @@
-from flask_restx import model, fields
+from flask_restx import fields
 
 from film_library import api
 
@@ -69,4 +69,13 @@ film_model = api.model("Film", {
     "poster_link": fields.String(required=True),
     "director_names": fields.String(description="must be separate by comma without space"),
     "genre_names": fields.String(description="must be separate by comma without space")
+})
+# message?
+
+director_delete_resource = api.model("Director", {
+    "director_name": fields.String(required=True)
+})
+
+delete_model = api.model("Delete", {
+    "message": fields.String(required=True)
 })
