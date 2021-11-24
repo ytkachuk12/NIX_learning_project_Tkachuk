@@ -233,7 +233,7 @@ def search_films(film_mask: str, release_range: Optional[List[str]],
     return list_of_films
 
 
-def insert_film(user_id, film_name: str, description: Optional[str], release_date: str,
+def insert_film(user_id: int, film_name: str, description: Optional[str], release_date: str,
                 poster_link: Optional[str], genre_names: Optional[list[str]],
                 director_names: Optional[List[str]]) -> dict:
     """Insert film data in DB

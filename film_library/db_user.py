@@ -19,7 +19,7 @@ def hashing_pass(password: str) -> str:
 def checking_pass(nickname: str, password: str) -> Optional[int]:
     """Check the DB contains nickname and password hash
     :returns user: Users object if nickname and password correct or None"""
-    check_user = Users.query.filter_by(nickname=nickname).first()
+    check_user = Users.query.filter_by(nickname=nickname).first_or_404(description="Incorrect nickname")
     if bcrypt.checkpw(password.encode('utf8'), check_user.hash_and_salt):
         return check_user
     return None
@@ -66,3 +66,7 @@ def register_user(nickname: str, password: str, email: str, first_name: Optional
     else:
         db.session.commit()
     return user.id
+
+
+if __name__ == "__main__":
+    pass
