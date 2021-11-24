@@ -10,6 +10,7 @@ Flask-Login==0.5.0
 Flask-Migrate==3.1.0
 flask-restx==0.5.1
 Flask-SQLAlchemy==2.5.1
+Flask-Testing==0.8.1
 greenlet==1.1.2
 iniconfig==1.1.1
 isort==5.10.1

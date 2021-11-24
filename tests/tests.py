@@ -1,6 +1,11 @@
 import pytest
 
 from film_library import app
+from tests.data_for_tests import FILMS, USERS, set_test_db
+from film_library.models import Films
+
+# set test data
+set_test_db()
 
 
 @pytest.fixture
@@ -12,13 +17,13 @@ def client():
 
 @pytest.fixture
 def login_user(client):
-    user = client.post("/login", data={"nickname": "yurii", "password": "password"})
+    user = client.post("/login", data={"nickname": USERS[0][0], "password": USERS[0][1]})
     return user
 
 
 @pytest.fixture
 def login_user_not_admin(client):
-    user = client.post("/login", data={"nickname": "ivan", "password": "passpass"})
+    user = client.post("/login", data={"nickname": USERS[2][0], "password": USERS[2][1]})
     return user
 
 
@@ -30,7 +35,7 @@ def test_register(client):
     assert response.status_code == 200
     # case of not unique username or password
     response = client.post("/register", data={
-        "nickname": "yurii", "password": "password", "email": "email1@gmail.com"
+        "nickname": USERS[0][0], "password": "password", "email": "email1@gmail.com"
     })
     assert response.status_code == 404
     # to small nickname
@@ -43,7 +48,7 @@ def test_register(client):
 def test_login(client):
     """test '/login' route, method = post"""
     # test successes login
-    response = client.post("/login", data={"nickname": "yurii", "password": "password"})
+    response = client.post("/login", data={"nickname": USERS[0][0], "password": USERS[0][1]})
     assert response.status_code == 200
     # test nickname not correct
     response = client.post("/login", data={"nickname": "yurii1", "password": "password"})
@@ -118,46 +123,15 @@ def test_search_film(client):
     """test search film, '/films' route, method = get"""
     # search by film mask
     response = client.get("/films?film_mask=die")
-    assert response.json == {"films": [
-        {
-            "film_id": 2,
-            "user_id": 2,
-            "film_name": "die hard",
-            "description": "description some",
-            "rating": 0.0,
-            "number_of_rated_users": 0,
-            "release_date": "1995.10.10",
-            "poster_link": "link2",
-            "director_names": "['dir3']",
-            "genre_names": "['thriller', 'detective']"
-        }]}
+    temp = response.json["films"]
+    assert len(temp) == 1
+    assert len(temp[0]) == len(FILMS[1]) + 3
+    assert temp[0]["film_name"] == FILMS[1][1]
+
     # search by film mask, release date, genre
     response = client.get("/films?film_mask=&genre_names=thriller&release_range=1990-01-01,2015-01-01")
-    assert response.json == {"films": [
-        {
-            "film_id": 1,
-            "user_id": 1,
-            "film_name": "matrix",
-            "description": "some description",
-            "rating": 0.0,
-            "number_of_rated_users": 0,
-            "release_date": "2003.12.12",
-            "poster_link": "link1",
-            "director_names": "['dir1', 'dir2']",
-            "genre_names": "['thriller', 'fantastic']"
-        },
-        {
-            "film_id": 2,
-            "user_id": 2,
-            "film_name": "die hard",
-            "description": "description some",
-            "rating": 0.0,
-            "number_of_rated_users": 0,
-            "release_date": "1995.10.10",
-            "poster_link": "link2",
-            "director_names": "['dir3']",
-            "genre_names": "['thriller', 'detective']"
-        }]}
+    temp = response.json["films"]
+    assert len(temp) == 2
 
 
 def test_delete_director(client, login_user):
@@ -171,29 +145,9 @@ def test_rate_film(client):
     """test rate film, '/film/rate' route, method = get"""
     # successes rate film
     response = client.get("/film/rate?film_id=1&user_rate=5")
-    assert response.json == {"films": {
-        "film_id": 1,
-        "user_id": 1,
-        "film_name": "matrix",
-        "description": "some description",
-        "rating": 5,
-        "number_of_rated_users": 1,
-        "release_date": "2003.12.12",
-        "poster_link": "link1",
-        "director_names": "['dir2']",
-        "genre_names": "['thriller', 'fantastic']"
-    }
-    }
+    temp = response.json["films"]
+    assert temp["rating"] == Films.query.filter_by(film_id=1).first().rating
+
     response = client.get("/film/rate?film_id=1&user_rate=4")
-    assert response.json == {"films": {
-        "film_id": 1,
-        "user_id": 1,
-        "film_name": "matrix",
-        "description": "some description",
-        "rating": 4.5,
-        "number_of_rated_users": 2,
-        "release_date": "2003.12.12",
-        "poster_link": "link1",
-        "director_names": "['dir2']",
-        "genre_names": "['thriller', 'fantastic']"
-    }}
+    temp = response.json["films"]
+    assert temp["rating"] == Films.query.filter_by(film_id=1).first().rating
