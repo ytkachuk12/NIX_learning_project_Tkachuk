@@ -43,7 +43,6 @@ class HelloWorld(Resource):
 
 
 @api.route('/login')
-# @my_logger('/login')
 class LoginUser(Resource):
 
     @api.doc(body=user_login_resource)
@@ -59,7 +58,7 @@ class LoginUser(Resource):
         if user:
             login_user(user)
             return {"id": current_user.id, "message": "Successfully logged in"}
-        return abort(400, f"Nickname {args['nickname']} or password {args['password']} not correct")
+        return abort(404, "Password not correct")
 
 
 @api.route("/logout")
@@ -90,9 +89,9 @@ class RegisterUser(Resource):
         args = parser.parse_args()
 
         if len(args['password']) < 7:
-            return abort(400, f"User {args['password']} is too small.")
+            return abort(404, f"User {args['password']} is too small.")
         if len(args['nickname']) < 5:
-            return abort(400, f"User {args['nickname']} is too small.")
+            return abort(404, f"User {args['nickname']} is too small.")
 
         user_id = register_user(args['nickname'], args['password'], args['email'],
                                 args['first_name'], args['surname'], args['age'], args['admin'])
@@ -147,7 +146,7 @@ class FilmsInteraction(Resource):
         film = insert_film(user_id, args["film_name"], args["description"], args["release_date"],
                            args["poster_link"], args["genre_names"], args["director_names"])
 
-        return film
+        return film, 201
 
     @api.marshal_with(film_model, code=201, envelope="films")
     @api.doc(body=film_change_resource)
@@ -169,13 +168,13 @@ class FilmsInteraction(Resource):
 
         # check if this user did not creat this film or user is not admin
         if user.id != get_user_creator(args['film_id']) and not current_user.admin:
-            abort(400, f"You can modify the films created by you Only, id: {user.id}")
+            abort(404, f"You can modify the films created by you Only, id: {user.id}")
 
         film = edit_film(
             args['film_id'], args['film_name'], args['description'], args['release_date'],
             args['poster_link'], args['director_names'], args['genre_names']
         )
-        return film
+        return film, 201
 
     @login_required
     @api.doc(body=film_delete_resource)
@@ -191,7 +190,7 @@ class FilmsInteraction(Resource):
 
         # check if this user did not creat this film or user is not admin
         if user.id != get_user_creator(args['id']) and not current_user.admin:
-            abort(400, f"You can modify the films created by you Only, id: {user.id}")
+            abort(404, f"You can modify the films created by you Only, id: {user.id}")
 
         return delete_film(args['id'])
 
