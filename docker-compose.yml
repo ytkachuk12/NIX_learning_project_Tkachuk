@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:14.0
+    restart: always
+
+    environment:
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: yurii
+      POSTGRES_PASSWORD: mypass
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    restart: on-failure
+    environment:
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://yurii:mypass@db:5432/postgres
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+
+  nginx:
+    build: nginx
+    restart: on-failure
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./cert:/cert
+      - ./nginx:/etc/nginx/conf.d
+        - ./film_library/
+
+volumes:
+  db-data:
