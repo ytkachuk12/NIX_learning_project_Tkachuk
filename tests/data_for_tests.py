@@ -1,3 +1,4 @@
+from film_library import db
 from film_library.db_user import register_user
 from film_library.db_film import insert_film
 
@@ -28,6 +29,13 @@ def register_test_user():
 def insert_test_film():
     for film in FILMS:
         insert_film(film[0], film[1], film[2], film[3], film[4], film[5], film[6])
+
+
+def set_test_db():
+    db.drop_all()
+    db.create_all()
+    register_test_user()
+    insert_test_film()
 
 
 if __name__ == "__main__":
