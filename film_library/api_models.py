@@ -1,10 +1,13 @@
+"""Description of api for request and response"""
 from flask_restx import fields
 
 from film_library import api
 
 user_register_resource = api.model('User_register', {
-    "nickname": fields.String(required=True, description="string more than 4 symbols and less than 50"),
-    "password": fields.String(required=True, description="string more than 6 symbols and less than 50"),
+    "nickname": fields.String(required=True,
+                              description="string more than 4 symbols and less than 50"),
+    "password": fields.String(required=True,
+                              description="string more than 6 symbols and less than 50"),
     "email": fields.String(required=True)
     })
 

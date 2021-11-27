@@ -1,3 +1,4 @@
+"""Routes for app here"""
 import logging
 
 from flask_login import login_user, login_required, logout_user, LoginManager, current_user
@@ -26,7 +27,7 @@ logging.basicConfig(filename='record.log', level=logging.DEBUG)
 
 @app.teardown_request
 def teardown_request(exception=None):
-    """Launch after any request"""
+    """Launch after any request and print log to file record.log"""
     app.logger.info("After request")
 
 
@@ -38,16 +39,23 @@ def load_user(id):
 
 @api.route('/')
 class HelloWorld(Resource):
+    """root resource you can find swagger description here"""
     def get(self):
+        """Root route
+            :return swagger description of api"""
         return {'hello': 'hello world'}
 
 
 @api.route('/login')
 class LoginUser(Resource):
-
+    """ Route login for login user
+        :param nickname: str, required
+        :param password: str, required
+        :returns json: {id: int, message: str}"""
     @api.doc(body=user_login_resource)
     @api.marshal_with(user_model, code=201, envelope="user")
     def post(self):
+        """method post"""
         parser = reqparse.RequestParser()
         parser.add_argument('nickname', type=str, required=True)
         parser.add_argument('password', type=str, required=True)
@@ -63,10 +71,12 @@ class LoginUser(Resource):
 
 @api.route("/logout")
 class LogoutUser(Resource):
-
+    """ Route logout for logout user
+            :returns json: {id: int, message: str}"""
     @login_required
     @api.marshal_with(user_model, code=200, envelope="users")
     def get(self):
+        """method get"""
         user_id = current_user.id
         logout_user()
         return {"id": user_id, "message": "Logged out"}
@@ -74,9 +84,19 @@ class LogoutUser(Resource):
 
 @api.route('/register')
 class RegisterUser(Resource):
+    """ Route login for register new user
+            :param nickname: str, required
+            :param password: str, required
+            :param email: str, required
+            :param first_name: str
+            :param surname: str
+            :param age: int
+            :param admin: bool, for default is False
+            :returns json: {id: int, message: str}"""
     @api.doc(body=user_register_resource)
     @api.marshal_with(user_model, code=200, envelope="users")
     def post(self):
+        """method post"""
         parser = reqparse.RequestParser()
         parser.add_argument('nickname', type=str, required=True)
         parser.add_argument('password', type=str, required=True)
@@ -101,10 +121,20 @@ class RegisterUser(Resource):
 
 @api.route('/films')
 class FilmsInteraction(Resource):
-
+    """ Route films for add, delete, update and search films"""
     @api.marshal_with(film_model, code=200, envelope="films")
     @api.doc(body=film_search_resource)
     def get(self):
+        """method get for search films by film mask, date-time, directors, genres
+        method has pagination sorting parameters
+            :param film_mask: str, required
+            :param release_range: str
+            :param director_names: str
+            :param genre_names: str
+            :param pagination: int, by default is 10
+            :param page_number: int by default is 1
+            :param sorting: str, can be "rating" or "release_range"
+            :return json{films: [list of films]"""
         parser = reqparse.RequestParser()
         parser.add_argument('film_mask', type=str, location='args', required=True)
         # filter args
@@ -130,6 +160,15 @@ class FilmsInteraction(Resource):
     @api.doc(body=film_insert_resource)
     @login_required
     def post(self):
+        """method post for insert new films in DB
+            :param film_name: str, required
+            :param description: str
+            :param release_date: str, required
+            :param poster_link: str, unique
+            :param genre_names: str
+            :param director_names: str
+            :return json {film: [{all film data}]}
+            """
         parser = reqparse.RequestParser()
         parser.add_argument('film_name', type=str, required=True)
         parser.add_argument('description', type=str)
@@ -152,6 +191,16 @@ class FilmsInteraction(Resource):
     @api.doc(body=film_change_resource)
     @login_required
     def put(self):
+        """method put for update film data in DB
+            :param film_id: str, required
+            :param film_name: str
+            :param description: str
+            :param release_data: str
+            :param poster_link: str
+            :param director_names: str
+            :param genre_names: str
+            :return json {film: [{all film data}]}
+            """
         parser = reqparse.RequestParser()
         parser.add_argument("film_id", type=int, required=True)
         parser.add_argument("film_name", type=str)
@@ -180,6 +229,10 @@ class FilmsInteraction(Resource):
     @api.doc(body=film_delete_resource)
     @api.marshal_with(delete_model, code=200, envelope="deletes")
     def delete(self):
+        """method delete for delete film from DB
+            :param id: str, required
+            :return json{message: str}
+            """
         parser = reqparse.RequestParser()
         parser.add_argument('id', type=int, required=True)
 
@@ -197,11 +250,15 @@ class FilmsInteraction(Resource):
 
 @api.route("/directors")
 class DelDirector(Resource):
-
+    """ Route directors for delete directors from DB
+        """
     @login_required
     @api.marshal_with(delete_model, code=200, envelope="deletes")
     @api.doc(body=director_delete_resource)
     def delete(self):
+        """method delete for delete director from DB
+        :param director_name: str, required
+        :return json{message: str}"""
         parser = reqparse.RequestParser()
         parser.add_argument('director_name', type=str, required=True)
 
@@ -209,17 +266,23 @@ class DelDirector(Resource):
 
         # check if this user is not admin
         if not current_user.admin:
-            abort(400, f"You can't modify directors")
+            abort(400, "You can't modify directors")
 
         return delete_director(args['director_name'])
 
 
 @api.route('/film/rate')
 class FilmsRate(Resource):
-
+    """ Route film/rate for rate film
+            """
     @api.marshal_with(film_model, code=200, envelope="films")
     @api.doc(body=film_rate_resource)
     def get(self):
+        """method get for rate film
+            :param film_id: str, required
+            :param user_rate: int, required, in [0, 5] include
+            :return json{film:[{all film param}}
+            """
         parser = reqparse.RequestParser()
         parser.add_argument('film_id', type=int, required=True)
         parser.add_argument('user_rate', type=int, required=True)
