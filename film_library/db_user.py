@@ -19,7 +19,8 @@ def hashing_pass(password: str) -> str:
 def checking_pass(nickname: str, password: str) -> Optional[int]:
     """Check the DB contains nickname and password hash
     :returns user: Users object if nickname and password correct or None"""
-    check_user = Users.query.filter_by(nickname=nickname).first_or_404(description="Incorrect nickname")
+    check_user = Users.query.filter_by(nickname=nickname).first_or_404(
+        description="Incorrect nickname")
     if bcrypt.checkpw(password.encode('utf8'), check_user.hash_and_salt):
         return check_user
     return None
@@ -42,7 +43,8 @@ def checking_email(email: str) -> bool:
 
 
 def register_user(nickname: str, password: str, email: str, first_name: Optional[str] = None,
-                  surname: Optional[str] = None, age: Optional[int] = None, admin: bool = False) -> int:
+                  surname: Optional[str] = None, age: Optional[int] = None,
+                  admin: bool = False) -> int:
     """Insert new user in db
     :return user id
     :raise flask abort if nickname is already in db, code 404
